@@ -8,13 +8,21 @@ import {Config} from '../config.js'
 
 
 
-
+//Register user POST /api/v1/user/register
 export const signUpuser = async (req,res)=>{
     try {
         const {name,email,password} = req.body
 
-        const  existingUser= await User.findOne({email})
-        if(existingUser){
+        if(!name||!email||!password){
+            return res.status(StatusCodes.BAD_REQUEST).json({
+                status:'error',
+                message:'Enter all the credentials',
+                data:null
+            })
+        }
+        //Check if user already exits
+        const  user= await User.findOne({email})
+        if(user){
             res.status(StatusCodes.BAD_REQUEST).json({
                 status:'error',
                 message:'User already exists',
@@ -59,9 +67,19 @@ export const signUpuser = async (req,res)=>{
 }
 
 
+//Login user POST /api/v1/user/login
+
 export const loginUser = async (req,res)=>{
     try {
         const {email,password} = req.body
+
+        if(!email||!password){
+            return res.status(StatusCodes.BAD_REQUEST).json({
+                status:'error',
+                message:'Enter all the credentials',
+                data:null
+            })
+        }
         const user = await User.findOne({email})
 
         //Compare provided password with hashed password in DB
@@ -99,3 +117,37 @@ export const loginUser = async (req,res)=>{
         
     }
 }
+
+
+//Get user profile GET /api/v1/user/profile
+
+export const getProfile = async (req, res) => {
+    try {
+        const  userId = req.params.id
+    const user = await User.findById(userId).select("-password");
+    
+    if(!user){
+        return res.status(StatusCodes.NOT_FOUND).json({
+            status:'error',
+            message:'User not found',
+            data:null
+        })
+    }
+
+    return res.status(StatusCodes.OK).json({
+      status: "success",
+      message:'Profile fetched successfully',
+      data: user,
+    });
+    
+    } catch (error) {
+        Logger.error({message: error.message})
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+            status:'error',
+            message:'An error occured while trying to fetch user profile',
+            data:null
+        })
+    }
+    
+  };
+  
